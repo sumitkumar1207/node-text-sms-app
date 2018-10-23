@@ -32,7 +32,7 @@ You will need to add your own Nexmo api key, secret and virtual number
 
 ### Author
 
-[Sumit Yadav](https://sumitkumar1207.github.io/my-portfolio/)
+[Sumit Yadav](https://sumitkumar1207.github.io/my-portfolio/){:target="_blank"}
 
 ### Version
 
