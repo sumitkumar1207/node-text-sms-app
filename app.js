@@ -16,6 +16,11 @@ app.use(express.static(__dirname + "/public"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
+//Catching response on form submittion
+app.post("/", (req, res) => {
+  res.send(req.body);
+  console.log(req.body);
+});
 //Defining the port
 const port = 3000;
 
