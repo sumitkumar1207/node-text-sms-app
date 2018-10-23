@@ -2,39 +2,47 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const Nexmo = require("nexmo");
+const socketio = require("socket.io");
 
-//Initialize the nexmo to the app
+//Get keys from key file
+const { MyApiKey, MySecretKey, MyTestNumber } = require("./keys");
+
+// Init Nexmo
 const nexmo = new Nexmo(
   {
-    apiKey: "b73c2ee9",
-    apiSecret: "6u25cA2XO8pkVZkx"
+    apiKey: MyApiKey,
+    apiSecret: MySecretKey
   },
   { debug: true }
 );
 
-//Initialize the app
+// Init app
 const app = express();
 
-//Setting up template engine
+// Template engine setup
 app.set("view engine", "html");
 app.engine("html", ejs.renderFile);
 
-//Setting up public folder
+// Public folder setup
 app.use(express.static(__dirname + "/public"));
 
-//BodyParser middlewarwe
+// Body parser middleware
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true }));
 
-//Catching response on form submittion
+// Index route
+app.get("/", (req, res) => {
+  res.render("index");
+});
+
+// Catch form submit
 app.post("/", (req, res) => {
   // res.send(req.body);
   // console.log(req.body);
-  const number = req.body.number;
-  const text = req.body.text;
+  const { number, text } = req.body;
 
   nexmo.message.sendSms(
-    "MyTestNumber",
+    MyTestNumber,
     number,
     text,
     { type: "unicode" },
@@ -42,16 +50,40 @@ app.post("/", (req, res) => {
       if (err) {
         console.log(err);
       } else {
+        const { messages } = responseData;
+        const {
+          ["message-id"]: id,
+          ["to"]: number,
+          ["error-text"]: error
+        } = messages[0];
         console.dir(responseData);
+        // Get data from response
+        const data = {
+          id,
+          number,
+          error
+        };
+
+        // Emit to the client
+        io.emit("smsStatus", data);
       }
     }
   );
 });
 
-//Defining the port
+// Define port
 const port = 3000;
 
-//Connect to the server
+// Start server
 const server = app.listen(port, () =>
-  console.log(`Server started on the port ${port}`)
+  console.log(`Server started on port ${port}`)
 );
+
+// Connect to socket.io
+const io = socketio(server);
+io.on("connection", socket => {
+  console.log("Connected");
+  io.on("disconnect", () => {
+    console.log("Disconnected");
+  });
+});
